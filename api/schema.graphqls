@@ -1,0 +1,83 @@
+directive @auth(roles: [Role!]) on FIELD_DEFINITION
+
+enum Role {
+    ADMIN
+    CUSTOMER
+}
+
+enum OrderStatus {
+    CREATED
+    DONE
+    CANCELED
+}
+
+type Auth {
+    token: String!
+}
+
+type User {
+    id: ID!
+    email: String!
+    password: String!
+    role: Role!
+}
+
+type Customer {
+    id: ID!
+    name: String!
+    Address: String!
+    userId: ID!
+    orders: [Order!]
+}
+
+type Product {
+    id: ID!
+    name: String!
+    price: Int!
+}
+
+type Order {
+    id: ID!
+    customerId: ID!
+    status: OrderStatus!
+    totalSum: Int!
+    products: [Product!]
+}
+
+type Query {
+    # Customer space queries
+    me: Customer! @auth(roles: [CUSTOMER])
+
+    # Common space
+    login(email: String! password: String!): Auth!
+}
+
+input CreateUserInput {
+    email: String!
+    password: String!
+    role: Role!
+}
+
+input CreateCustomerInput {
+    email: String!
+    password: String!
+    name: String!
+    address: String!
+}
+
+input CreateProductInput {
+    name: String!
+    price: Int!
+}
+
+type Mutation {
+    # Admin space mutations
+    createOneUser(input: CreateUserInput!): User! @auth(roles: [ADMIN])
+    createOneProduct(input: CreateProductInput!): Product! @auth(roles: [ADMIN])
+
+    # Customer space mutations
+    createOneOrder(customerId: ID!, productIds: [ID!]): Order! @auth(roles: [CUSTOMER])
+
+    # Common space mutations
+    createOneCustomer(input: CreateCustomerInput!): Customer!
+}

@@ -1,0 +1,31 @@
+version: "3"
+
+services:
+  psql:
+    image: postgres:11
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: shop_db
+      POSTGRES_PASSWORD: shop_db
+      POSTGRES_DB: shop_db
+
+  redis-cluster:
+    image: druotic/redis-cluster:3.2.3
+    expose:
+      - 7000
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8080:8080
+    depends_on:
+      - psql
+      - redis-cluster
+    environment:
+      GRAPHQL_SHOP_PORT: 8080
+      GRAPHQL_SHOP_DSN: "host=psql port=5432 dbname=shop_db user=shop_db password=shop_db sslmode=disable connect_timeout=5 binary_parameters=yes"
+      GRAPHQL_SHOP_HASH_SALT: "test_salt"
+      GRAPHQL_SHOP_REDIS_URL: "redis-cluster:7000"
