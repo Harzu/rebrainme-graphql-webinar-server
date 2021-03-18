@@ -28,3 +28,11 @@ mocks:
 psql-exec:
 	PGPASSWORD=shop_db docker-compose exec psql \
 	psql -h localhost -p 5432 -U shop_db -d shop_db
+
+run:
+	@docker-compose up -d psql redis-cluster
+	@sleep 5
+	@docker-compose up -d --build app
+
+stop:
+	@docker-compose down
