@@ -69,7 +69,7 @@ type ComplexityRoot struct {
 		ID         func(childComplexity int) int
 		Products   func(childComplexity int) int
 		Status     func(childComplexity int) int
-		TotalSum   func(childComplexity int) int
+		TotalPrice func(childComplexity int) int
 	}
 
 	Product struct {
@@ -124,7 +124,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Auth.Token(childComplexity), true
 
-	case "Customer.Address":
+	case "Customer.address":
 		if e.complexity.Customer.Address == nil {
 			break
 		}
@@ -235,12 +235,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Order.Status(childComplexity), true
 
-	case "Order.totalSum":
-		if e.complexity.Order.TotalSum == nil {
+	case "Order.totalPrice":
+		if e.complexity.Order.TotalPrice == nil {
 			break
 		}
 
-		return e.complexity.Order.TotalSum(childComplexity), true
+		return e.complexity.Order.TotalPrice(childComplexity), true
 
 	case "Product.id":
 		if e.complexity.Product.ID == nil {
@@ -401,7 +401,7 @@ type User {
 type Customer {
     id: ID!
     name: String!
-    Address: String!
+    address: String!
     userId: ID!
     orders: [Order!]
 }
@@ -416,13 +416,13 @@ type Order {
     id: ID!
     customerId: ID!
     status: OrderStatus!
-    totalSum: Int!
+    totalPrice: Int!
     products: [Product!]
 }
 
 type Query {
     # Customer space queries
-    me: Customer! @auth(roles: [ADMIN, CUSTOMER])
+    me: Customer! @auth(roles: [CUSTOMER])
 
     # Common space
     login(email: String! password: String!): Auth!
@@ -452,7 +452,7 @@ type Mutation {
     createOneProduct(input: CreateProductInput!): Product! @auth(roles: [ADMIN])
 
     # Customer space mutations
-    createOneOrder(customerId: ID!, productIds: [ID!]): Order!
+    createOneOrder(customerId: ID!, productIds: [ID!]!): Order! @auth(roles: [CUSTOMER])
 
     # Common space mutations
     createOneCustomer(input: CreateCustomerInput!): Customer!
@@ -509,7 +509,7 @@ func (ec *executionContext) field_Mutation_createOneOrder_args(ctx context.Conte
 	var arg1 []int64
 	if tmp, ok := rawArgs["productIds"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("productIds"))
-		arg1, err = ec.unmarshalOID2ᚕint64ᚄ(ctx, tmp)
+		arg1, err = ec.unmarshalNID2ᚕint64ᚄ(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -730,7 +730,7 @@ func (ec *executionContext) _Customer_name(ctx context.Context, field graphql.Co
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Customer_Address(ctx context.Context, field graphql.CollectedField, obj *model.Customer) (ret graphql.Marshaler) {
+func (ec *executionContext) _Customer_address(ctx context.Context, field graphql.CollectedField, obj *model.Customer) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -988,8 +988,32 @@ func (ec *executionContext) _Mutation_createOneOrder(ctx context.Context, field 
 	}
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateOneOrder(rctx, args["customerId"].(int64), args["productIds"].([]int64))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().CreateOneOrder(rctx, args["customerId"].(int64), args["productIds"].([]int64))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			roles, err := ec.unmarshalORole2ᚕwebinarᚋgraphqlᚋserverᚋinternalᚋgraphᚋmodelᚐRoleᚄ(ctx, []interface{}{"CUSTOMER"})
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.Auth == nil {
+				return nil, errors.New("directive auth is not implemented")
+			}
+			return ec.directives.Auth(ctx, nil, directive0, roles)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.Order); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *webinar/graphql/server/internal/graph/model.Order`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1153,7 +1177,7 @@ func (ec *executionContext) _Order_status(ctx context.Context, field graphql.Col
 	return ec.marshalNOrderStatus2webinarᚋgraphqlᚋserverᚋinternalᚋgraphᚋmodelᚐOrderStatus(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Order_totalSum(ctx context.Context, field graphql.CollectedField, obj *model.Order) (ret graphql.Marshaler) {
+func (ec *executionContext) _Order_totalPrice(ctx context.Context, field graphql.CollectedField, obj *model.Order) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1171,7 +1195,7 @@ func (ec *executionContext) _Order_totalSum(ctx context.Context, field graphql.C
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.TotalSum, nil
+		return obj.TotalPrice, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1347,7 +1371,7 @@ func (ec *executionContext) _Query_me(ctx context.Context, field graphql.Collect
 			return ec.resolvers.Query().Me(rctx)
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
-			roles, err := ec.unmarshalORole2ᚕwebinarᚋgraphqlᚋserverᚋinternalᚋgraphᚋmodelᚐRoleᚄ(ctx, []interface{}{"ADMIN", "CUSTOMER"})
+			roles, err := ec.unmarshalORole2ᚕwebinarᚋgraphqlᚋserverᚋinternalᚋgraphᚋmodelᚐRoleᚄ(ctx, []interface{}{"CUSTOMER"})
 			if err != nil {
 				return nil, err
 			}
@@ -2888,8 +2912,8 @@ func (ec *executionContext) _Customer(ctx context.Context, sel ast.SelectionSet,
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "Address":
-			out.Values[i] = ec._Customer_Address(ctx, field, obj)
+		case "address":
+			out.Values[i] = ec._Customer_address(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -2983,8 +3007,8 @@ func (ec *executionContext) _Order(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "totalSum":
-			out.Values[i] = ec._Order_totalSum(ctx, field, obj)
+		case "totalPrice":
+			out.Values[i] = ec._Order_totalPrice(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -3456,6 +3480,42 @@ func (ec *executionContext) marshalNID2int64(ctx context.Context, sel ast.Select
 	return res
 }
 
+func (ec *executionContext) unmarshalNID2ᚕint64ᚄ(ctx context.Context, v interface{}) ([]int64, error) {
+	var vSlice []interface{}
+	if v != nil {
+		if tmp1, ok := v.([]interface{}); ok {
+			vSlice = tmp1
+		} else {
+			vSlice = []interface{}{v}
+		}
+	}
+	var err error
+	res := make([]int64, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNID2int64(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNID2ᚕint64ᚄ(ctx context.Context, sel ast.SelectionSet, v []int64) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNID2int64(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) unmarshalNInt2int64(ctx context.Context, v interface{}) (int64, error) {
 	res, err := graphql.UnmarshalInt64(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3586,6 +3646,13 @@ func (ec *executionContext) marshalN__Directive2ᚕgithubᚗcomᚋ99designsᚋgq
 
 	}
 	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
 	return ret
 }
 
@@ -3659,6 +3726,13 @@ func (ec *executionContext) marshalN__DirectiveLocation2ᚕstringᚄ(ctx context
 
 	}
 	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
 	return ret
 }
 
@@ -3708,6 +3782,13 @@ func (ec *executionContext) marshalN__InputValue2ᚕgithubᚗcomᚋ99designsᚋg
 
 	}
 	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
 	return ret
 }
 
@@ -3749,6 +3830,13 @@ func (ec *executionContext) marshalN__Type2ᚕgithubᚗcomᚋ99designsᚋgqlgen�
 
 	}
 	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
 	return ret
 }
 
@@ -3801,42 +3889,6 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return graphql.MarshalBoolean(*v)
 }
 
-func (ec *executionContext) unmarshalOID2ᚕint64ᚄ(ctx context.Context, v interface{}) ([]int64, error) {
-	if v == nil {
-		return nil, nil
-	}
-	var vSlice []interface{}
-	if v != nil {
-		if tmp1, ok := v.([]interface{}); ok {
-			vSlice = tmp1
-		} else {
-			vSlice = []interface{}{v}
-		}
-	}
-	var err error
-	res := make([]int64, len(vSlice))
-	for i := range vSlice {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNID2int64(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
-}
-
-func (ec *executionContext) marshalOID2ᚕint64ᚄ(ctx context.Context, sel ast.SelectionSet, v []int64) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	for i := range v {
-		ret[i] = ec.marshalNID2int64(ctx, sel, v[i])
-	}
-
-	return ret
-}
-
 func (ec *executionContext) marshalOOrder2ᚕᚖwebinarᚋgraphqlᚋserverᚋinternalᚋgraphᚋmodelᚐOrderᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Order) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -3874,6 +3926,13 @@ func (ec *executionContext) marshalOOrder2ᚕᚖwebinarᚋgraphqlᚋserverᚋint
 
 	}
 	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
 	return ret
 }
 
@@ -3914,6 +3973,13 @@ func (ec *executionContext) marshalOProduct2ᚕᚖwebinarᚋgraphqlᚋserverᚋi
 
 	}
 	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
 	return ret
 }
 
@@ -3978,6 +4044,13 @@ func (ec *executionContext) marshalORole2ᚕwebinarᚋgraphqlᚋserverᚋinterna
 
 	}
 	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
 	return ret
 }
 
@@ -4042,6 +4115,13 @@ func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgq
 
 	}
 	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
 	return ret
 }
 
@@ -4082,6 +4162,13 @@ func (ec *executionContext) marshalO__Field2ᚕgithubᚗcomᚋ99designsᚋgqlgen
 
 	}
 	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
 	return ret
 }
 
@@ -4122,6 +4209,13 @@ func (ec *executionContext) marshalO__InputValue2ᚕgithubᚗcomᚋ99designsᚋg
 
 	}
 	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
 	return ret
 }
 
@@ -4169,6 +4263,13 @@ func (ec *executionContext) marshalO__Type2ᚕgithubᚗcomᚋ99designsᚋgqlgen�
 
 	}
 	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
 	return ret
 }
 

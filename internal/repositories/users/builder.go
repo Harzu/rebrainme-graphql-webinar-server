@@ -62,3 +62,16 @@ func prepareInsertOrUpdateCustomerQuery(name string, address string, userId int6
 
 	return rawRequest.ToSql()
 }
+
+func prepareFindCustomerByUserIdQuery(userId int64) (string, []interface{}, error) {
+	psqlSq := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+
+	rawRequest := psqlSq.Select("id", "user_id", "name", "address").
+		From(tableCustomers).
+		Where(sq.Eq{
+			"user_id":    userId,
+			"deleted_at": nil,
+		})
+
+	return rawRequest.ToSql()
+}

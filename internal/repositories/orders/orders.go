@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"webinar/graphql/server/internal/entities"
 	"webinar/graphql/server/internal/repositories/common"
 )
 
@@ -39,4 +40,36 @@ func (r *repositoryDB) InsertOrder(ctx context.Context, customerID int64, produc
 	}
 
 	return orderId, err
+}
+
+func (r *repositoryDB) FindOrdersByCustomerId(_ context.Context, customerId int64) (_ entities.Orders, err error) {
+	query, args, err := prepareFindOrdersByCustomerIdQuery(customerId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to prepare FindOrdersByCustomerId query: %w", err)
+	}
+
+	rows, err := r.client.Queryx(query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute FindOrdersByCustomerId query: %w", err)
+	}
+	defer func() {
+		if closeErr := rows.Close(); closeErr != nil && err == nil {
+			err = closeErr
+		}
+	}()
+
+	var orders entities.Orders
+	for rows.Next() {
+		var model ordersModel
+		if err := rows.StructScan(&model); err != nil {
+			return nil, fmt.Errorf("failed to scan row to order: %w", err)
+		}
+		orders = append(orders, buildOrderEntity(model))
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("unable to scan all out of FindOrdersByCustomerId: %w", err)
+	}
+
+	return orders, err
 }

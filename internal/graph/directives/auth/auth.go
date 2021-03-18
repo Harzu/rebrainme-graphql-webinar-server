@@ -47,7 +47,7 @@ func (d *authDirective) Resolve(
 
 	for _, role := range roles {
 		if role == session.Role {
-			return next(ctx)
+			return next(context.WithValue(ctx, constants.SessionContextKey, session))
 		}
 	}
 

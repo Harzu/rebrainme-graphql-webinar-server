@@ -14,13 +14,16 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS customers (
     id         bigserial primary key,
-    user_id    integer not null references users(id),
+    user_id    integer not null unique references users(id),
     name       text not null,
     address    text not null,
     created_at timestamp with time zone not null,
     updated_at timestamp with time zone,
     deleted_at timestamp with time zone
 );
+
+INSERT INTO users (email, password_hash, role, created_at)
+VALUES ('adm@adm.com', '098f6bcd4621d373cade4e832627b4f6', 'ADMIN', now());
 
 CREATE TABLE IF NOT EXISTS products (
     id         bigserial primary key,

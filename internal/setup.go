@@ -13,9 +13,9 @@ import (
 	"webinar/graphql/server/internal/graph/directives"
 	"webinar/graphql/server/internal/graph/generated"
 	"webinar/graphql/server/internal/graph/resolvers"
-	"webinar/graphql/server/internal/middlewares"
 	"webinar/graphql/server/internal/repositories"
 	"webinar/graphql/server/internal/services"
+	"webinar/graphql/server/internal/services/middlewares"
 	"webinar/graphql/server/internal/system/database/psql"
 	"webinar/graphql/server/internal/system/database/redis"
 )

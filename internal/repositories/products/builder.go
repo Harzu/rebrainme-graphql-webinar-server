@@ -1,12 +1,16 @@
 package products
 
 import (
+	"fmt"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
 )
 
-const tableProducts = "products"
+const (
+	tableProducts      = "products"
+	tableOrderProducts = "order_products"
+)
 
 func prepareInsertOrUpdateProduct(name string, price int64) (string, []interface{}, error) {
 	psqlSq := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
@@ -33,6 +37,21 @@ func prepareFindProductsByIdsQuery(productIds []int64) (string, []interface{}, e
 		Where(sq.Eq{
 			"id":         productIds,
 			"deleted_at": nil,
+		})
+
+	return rawRequest.ToSql()
+}
+
+func prepareFindProductsByOrdersMapQuery(orderIds []int64) (string, []interface{}, error) {
+	psqlSq := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+
+	rawRequest := psqlSq.Select("p.id", "p.name", "p.price", "op.order_id").
+		From(fmt.Sprintf("%s p", tableProducts)).
+		Join(fmt.Sprintf("%s op on p.id = op.product_id", tableOrderProducts)).
+		Where(sq.Eq{
+			"op.order_id":   orderIds,
+			"op.deleted_at": nil,
+			"p.deleted_at":  nil,
 		})
 
 	return rawRequest.ToSql()

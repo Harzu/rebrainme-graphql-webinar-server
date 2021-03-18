@@ -44,12 +44,17 @@ func (r *resolvers) CreateOneOrder(ctx context.Context, customerID int64, produc
 		ID:         orderId,
 		CustomerID: customerID,
 		Status:     model.OrderStatusCreated,
-		TotalSum:   totalPrice,
+		TotalPrice: totalPrice,
 		Products:   make([]*model.Product, 0, len(productsSlice)),
 	}
 
 	for index := range productsSlice {
-		result.Products = append(result.Products, &productsSlice[index])
+		productModel := &model.Product{
+			ID:    productsSlice[index].ID,
+			Name:  productsSlice[index].Name,
+			Price: productsSlice[index].Price,
+		}
+		result.Products = append(result.Products, productModel)
 	}
 
 	return result, nil

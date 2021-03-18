@@ -7,12 +7,23 @@ NOCACHE := $(if $(NOCACHE),"--no-cache")
 PSQL_DEV_DSN := "host=localhost port=5432 dbname=shop_db user=shop_db password=shop_db sslmode=disable connect_timeout=5 binary_parameters=yes"
 
 docker-build:
-	@docker build ${NOCACHE} --pull -f ./Dockerfile -t ${REPOSITORY}/${APP_NAME}:${VERSION} --ssh default --progress=plain .
+	@docker build ${NOCACHE} --pull -f ./Dockerfile -t ${REPOSITORY}/${APP_NAME}:${VERSION} --ssh default .
 
 migration-up:
 	@goose -dir ./migrations "postgres" $(PSQL_DEV_DSN) up
 migration-down:
 	@goose -dir ./migrations "postgres" $(PSQL_DEV_DSN) down
+
+gen-install:
+	@go get github.com/99designs/gqlgen
+
+gen:
+	@gqlgen generate
+
+mocks:
+	@echo "Regenerate mocks..."
+	@rm -rf ./test/mocks/
+	@go generate ./...
 
 psql-exec:
 	PGPASSWORD=shop_db docker-compose exec psql \

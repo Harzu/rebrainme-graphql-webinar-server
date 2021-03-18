@@ -25,7 +25,7 @@ type User {
 type Customer {
     id: ID!
     name: String!
-    Address: String!
+    address: String!
     userId: ID!
     orders: [Order!]
 }
@@ -40,7 +40,7 @@ type Order {
     id: ID!
     customerId: ID!
     status: OrderStatus!
-    totalSum: Int!
+    totalPrice: Int!
     products: [Product!]
 }
 
@@ -76,7 +76,7 @@ type Mutation {
     createOneProduct(input: CreateProductInput!): Product! @auth(roles: [ADMIN])
 
     # Customer space mutations
-    createOneOrder(customerId: ID!, productIds: [ID!]): Order! @auth(roles: [CUSTOMER])
+    createOneOrder(customerId: ID!, productIds: [ID!]!): Order! @auth(roles: [CUSTOMER])
 
     # Common space mutations
     createOneCustomer(input: CreateCustomerInput!): Customer!

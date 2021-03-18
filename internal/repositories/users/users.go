@@ -17,13 +17,13 @@ func (r *repositoryDB) FindUserSessionInfoByCredentials(_ context.Context, email
 		return entities.Session{}, fmt.Errorf("failed to prepare FindUserSessionInfoByCredentials query: %s", err)
 	}
 
-	var session entities.Session
+	var session sessionModel
 	row := r.client.QueryRowx(query, args...)
-	if err := row.Scan(&session.UserID, &session.Role); err != nil {
+	if err := row.StructScan(&session); err != nil {
 		return entities.Session{}, fmt.Errorf("failed to scan row to session: %w", err)
 	}
 
-	return session, nil
+	return buildSessionEntity(session), nil
 }
 
 func (r *repositoryDB) InsertOrUpdateUser(_ context.Context, tx *sqlx.Tx, createUserInput *model.CreateUserInput) (int64, error) {
@@ -79,4 +79,19 @@ func (r *repositoryDB) InsertOrUpdateCustomerUser(ctx context.Context, createCus
 	}
 
 	return customerId, userId, err
+}
+
+func (r *repositoryDB) FindCustomerByUserId(_ context.Context, userId int64) (entities.Customer, error) {
+	query, args, err := prepareFindCustomerByUserIdQuery(userId)
+	if err != nil {
+		return entities.Customer{}, fmt.Errorf("failed to prepare FindCustomerByUserId query: %w", err)
+	}
+
+	var customer customerModel
+	row := r.client.QueryRowx(query, args...)
+	if err := row.StructScan(&customer); err != nil {
+		return entities.Customer{}, fmt.Errorf("failed to scan row to customer: %w", err)
+	}
+
+	return buildCustomerEntity(customer), nil
 }

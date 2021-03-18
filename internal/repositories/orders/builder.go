@@ -36,3 +36,21 @@ func prepareInsertOrderProductsQuery(orderId int64, productIds []int64) (string,
 
 	return rawRequest.ToSql()
 }
+
+func prepareFindOrdersByCustomerIdQuery(customerId int64) (string, []interface{}, error) {
+	psqlSq := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+
+	rawRequest := psqlSq.Select(
+		"id",
+		"customer_id",
+		"total_price",
+		"status",
+	).
+		From(tableOrders).
+		Where(sq.Eq{
+			"customer_id": customerId,
+			"deleted_at":  nil,
+		})
+
+	return rawRequest.ToSql()
+}

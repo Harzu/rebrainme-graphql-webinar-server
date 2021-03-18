@@ -20,9 +20,9 @@ type container struct {
 func New(services *services.Container, repositories *repositories.Container) *container {
 	return &container{
 		UserResolvers:     users.New(repositories.Users, services.SessionStorage),
-		OrderResolvers:    orders.New(),
+		OrderResolvers:    orders.New(repositories.Orders, repositories.Products),
 		ProductResolvers:  products.New(repositories.Products),
-		CustomerResolvers: customers.New(),
+		CustomerResolvers: customers.New(repositories.Users, repositories.Orders, repositories.Products),
 	}
 }
 

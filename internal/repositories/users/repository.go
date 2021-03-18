@@ -13,7 +13,8 @@ import (
 type Repository interface {
 	InsertOrUpdateUser(ctx context.Context, tx *sqlx.Tx, createUserInput *model.CreateUserInput) (int64, error)
 	InsertOrUpdateCustomerUser(ctx context.Context, createCustomerInput *model.CreateCustomerInput) (int64, int64, error)
-	FindUserSessionInfoByCredentials(_ context.Context, email, passwordHash string) (entities.Session, error)
+	FindUserSessionInfoByCredentials(ctx context.Context, email, passwordHash string) (entities.Session, error)
+	FindCustomerByUserId(ctx context.Context, userId int64) (entities.Customer, error)
 }
 
 type repositoryDB struct {

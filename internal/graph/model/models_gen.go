@@ -33,7 +33,7 @@ type CreateUserInput struct {
 type Customer struct {
 	ID      int64    `json:"id"`
 	Name    string   `json:"name"`
-	Address string   `json:"Address"`
+	Address string   `json:"address"`
 	UserID  int64    `json:"userId"`
 	Orders  []*Order `json:"orders"`
 }
@@ -42,7 +42,7 @@ type Order struct {
 	ID         int64       `json:"id"`
 	CustomerID int64       `json:"customerId"`
 	Status     OrderStatus `json:"status"`
-	TotalSum   int64       `json:"totalSum"`
+	TotalPrice int64       `json:"totalPrice"`
 	Products   []*Product  `json:"products"`
 }
 
